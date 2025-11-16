@@ -1,7 +1,8 @@
 import math
 from collections import defaultdict
+import random
 
-SAMPLE = """# Sample graph (edge list: nodeA nodeB weight)
+SAMPLE_GRAPH = """## Sample graph (Edges: nodeA nodeB weight)
 A B 4
 A H 8
 B H 11
@@ -18,8 +19,24 @@ F E 10
 G F 2
 """
 
+def generate_random_graph(num_nodes, num_edges):
+    nodes = [str(i) for i in range(num_nodes)]
+    edges = []
+    seen = set()
 
-def parse_edge_list(text):
+    while len(edges) < num_edges:
+        u = random.choice(nodes)
+        v = random.choice(nodes)
+        if u == v:
+            continue
+        w = random.randint(1, 20)
+        key = tuple(sorted((u, v)) + [w])
+        if key not in seen:
+            seen.add(key)
+            edges.append((u, v, w))
+    return nodes, edges
+
+def parse_edge_list(text):            # plot
     edges = []
     nodes = set()
     for i, line in enumerate(text.splitlines(), start=1):
@@ -50,27 +67,58 @@ def layout_nodes_circle(nodes, radius=1.0):
     return positions
 
 
-def draw_graph(ax, nodes, edges, mst_edges):
+def draw_graph2(ax, nodes, edges, mst_edges):
     ax.clear()
     ax.set_axis_off()
     positions = layout_nodes_circle(nodes, radius=1.0)
-    # draw non-MST edges (light)
+
     for u, v, w in edges:
         if (u, v, w) in mst_edges or (v, u, w) in mst_edges:
             continue
         x1, y1 = positions[u]
         x2, y2 = positions[v]
         ax.plot([x1, x2], [y1, y2], linewidth=1, alpha=0.6)
-    # draw MST edges thicker
+
     for u, v, w in mst_edges:
         x1, y1 = positions[u]
         x2, y2 = positions[v]
         ax.plot([x1, x2], [y1, y2], linewidth=3)
-    # draw nodes
+
     for node in nodes:
         x, y = positions[node]
         ax.plot(x, y, marker='o', markersize=8)
         ax.text(x, y, f" {node}", fontsize=9, va='center')
+
     ax.relim()
     ax.autoscale_view()
+
+def draw_graph(ax, nodes, edges, mst_edges):
+    ax.clear()
+    ax.set_axis_off()
+    positions = layout_nodes_circle(nodes, radius=1.0)
+    
+    edge_color = 'gray'
+    
+    for u, v, w in edges:
+        x1, y1 = positions[u]
+        x2, y2 = positions[v]
+
+        if (u, v, w) in mst_edges or (v, u, w) in mst_edges:
+            lw = 3
+            ls = '-'  
+        else:
+            lw = 1
+            ls = ':'
+        ax.plot([x1, x2], [y1, y2], color=edge_color, linewidth=lw, linestyle=ls, alpha=0.8)
+        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+        ax.text(mx, my, str(w), fontsize=8, color='black', ha='center', va='center')
+
+    for node in nodes:
+        x, y = positions[node]
+        ax.plot(x, y, marker='o', markersize=8, color='skyblue')
+        ax.text(x, y, f" {node}", fontsize=9, va='center')
+
+    ax.relim()
+    ax.autoscale_view()
+
 
